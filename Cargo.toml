@@ -1,0 +1,16 @@
+[workspace.package]
+edition = "2024"
+version = "0.1.0"
+
+license = "Apache-2.0"
+rust-version = "1.85"
+
+
+[workspace]
+resolver = "2"
+members = ["crates/fluss", "crates/examples"]
+
+[workspace.dependencies]
+fluss = { version = "0.1.0", path = "./crates/fluss" }
+tokio = { version = "1.44.2", features = ["full"] }
+clap = { version = "4.5.37", features = ["derive"] }
