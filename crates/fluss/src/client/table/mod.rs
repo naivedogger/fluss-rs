@@ -1,8 +1,6 @@
 use std::sync::Arc;
 use crate::client::connection::FlussConnection;
 use crate::client::metadata::Metadata;
-use crate::client::table::append::TableAppend;
-use crate::client::table::scanner::TableScan;
 use crate::metadata::{TableInfo, TablePath};
 
 use crate::error::Result;
@@ -11,6 +9,10 @@ mod append;
 
 mod scanner;
 mod writer;
+
+pub use append::{TableAppend, AppendWriter};
+pub use scanner::{TableScan, LogScanner};
+
 
 pub struct FlussTable<'a> {
     conn: &'a FlussConnection,
