@@ -568,6 +568,10 @@ impl ArrayType {
             element_type: self.element_type.clone(),
         }
     }
+
+    pub fn get_element_type(&self) -> &DataType {
+        &self.element_type
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, Hash)]
@@ -596,6 +600,14 @@ impl MapType {
             key_type: self.key_type.clone(),
             value_type: self.value_type.clone(),
         }
+    }
+
+    pub fn key_type(&self) -> &DataType {
+        &self.key_type
+    }
+
+    pub fn value_type(&self) -> &DataType {
+        &self.value_type
     }
 }
 
