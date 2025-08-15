@@ -15,7 +15,7 @@ pub async fn main() -> Result<()> {
     config.bootstrap_server = Some("127.0.0.1:56405".to_string());
 
     let conn = FlussConnection::new(config).await?;
-
+    
     let table_descriptor = TableDescriptor::builder()
         .schema(
             Schema::builder()
@@ -136,7 +136,7 @@ pub async fn main() -> Result<()> {
 
     // scan rows
     let log_scanner = table.new_scan().create_log_scanner();
-    log_scanner.subscribe(0, 0).await;
+    log_scanner.subscribe(0, 0).await?;
 
     loop {
         let scan_records = log_scanner.poll(Duration::from_secs(10)).await?;

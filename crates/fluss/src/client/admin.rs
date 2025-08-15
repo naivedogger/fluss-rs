@@ -35,6 +35,23 @@ impl FlussAdmin {
         })
     }
 
+    pub async fn create_database(
+        &self,
+        database_name: &str,
+        ignore_if_exists: bool,
+        database_descriptor: Option<&DatabaseDescriptor>,
+    ) -> Result<()> {
+        let _response = self
+            .admin_gateway
+            .request(CreateDatabaseRequest::new(
+                database_name,
+                ignore_if_exists,
+                database_descriptor,
+            )?)
+            .await?;
+        Ok(())
+    }
+
     pub async fn create_table(
         &self,
         table_path: &TablePath,
