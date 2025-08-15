@@ -1,8 +1,8 @@
 use std::sync::Arc;
 use crate::client::metadata::Metadata;
-use crate::metadata::{JsonSerde, TableDescriptor, TableInfo, TablePath};
+use crate::metadata::{JsonSerde, TableDescriptor, TableInfo, TablePath, DatabaseDescriptor};
 use crate::rpc::{RpcClient, ServerConnection};
-use crate::rpc::message::{GetTableRequest, CreateTableRequest};
+use crate::rpc::message::{GetTableRequest, CreateTableRequest, DropTableRequest, CreateDatabaseRequest, ListTablesRequest};
 
 
 use crate::error::Result;
@@ -32,6 +32,23 @@ impl FlussAdmin {
         })
     }
 
+    pub async fn create_database(
+        &self,
+        database_name: &str,
+        ignore_if_exists: bool,
+        database_descriptor: Option<&DatabaseDescriptor>,
+    ) -> Result<()> {
+        let _response = self
+            .admin_gateway
+            .request(CreateDatabaseRequest::new(
+                database_name,
+                ignore_if_exists,
+                database_descriptor,
+            )?)
+            .await?;
+        Ok(())
+    }
+
     pub async fn create_table(
         &self,
         table_path: &TablePath,
@@ -43,6 +60,21 @@ impl FlussAdmin {
             .request(CreateTableRequest::new(
                 table_path,
                 table_descriptor,
+                ignore_if_exists,
+            )?)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn drop_table(
+        &self,
+        table_path: &TablePath,
+        ignore_if_exists: bool,
+    ) -> Result<()> {
+        let response = self
+            .admin_gateway
+            .request(DropTableRequest::new(
+                table_path,
                 ignore_if_exists,
             )?)
             .await?;
@@ -72,5 +104,13 @@ impl FlussAdmin {
             created_time,
             modified_time,
         ))
+    }
+
+    pub async fn list_tables(&self, database_name: &str) -> Result<Vec<String>> {
+        let response = self
+            .admin_gateway
+            .request(ListTablesRequest::new(database_name)?)
+            .await?;
+        Ok(response.table_name)
     }
 }

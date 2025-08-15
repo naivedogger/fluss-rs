@@ -4,13 +4,19 @@ use crate::rpc::api_version::ApiVersion;
 use crate::rpc::frame::{ReadError, WriteError};
 
 mod header;
+mod create_database;
 mod create_table;
+mod drop_table;
+mod list_tables;
 mod fetch;
 mod get_table;
 mod update_metadata;
 mod produce_log;
 
+pub use create_database::*;
 pub use create_table::*;
+pub use drop_table::*;
+pub use list_tables::*;
 pub use fetch::*;
 pub use get_table::*;
 pub use update_metadata::*;
