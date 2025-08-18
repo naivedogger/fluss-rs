@@ -174,10 +174,7 @@ impl FlussAdmin {
         self.metadata.check_and_update_table_metadata(&[table_path.get_table_path().clone()]).await?;
 
         let cluster = self.metadata.get_cluster();
-        println!("1");
         let table_id_map = cluster.get_table_id_by_path();
-        println!("Table ID map: {:?}", table_id_map);
-        println!("Looking for table path: {:?}", table_path.get_table_path());
         let table_id = table_id_map
             .get(table_path.get_table_path())
             .copied()
@@ -221,7 +218,6 @@ impl FlussAdmin {
         
         for &bucket_id in buckets {
             let table_bucket = TableBucket::new(table_id, bucket_id);
-            println!("2");
             let leader = cluster.leader_for(&table_bucket)
                 .ok_or_else(|| crate::error::Error::InvalidTableError(
                     format!("No leader found for table bucket: table_id={}, bucket_id={}", table_id, bucket_id)
@@ -276,7 +272,6 @@ impl FlussAdmin {
             
             let task = tokio::spawn(async move {
                 let cluster = metadata.get_cluster();
-                println!("3");
                 let tablet_server = cluster.get_tablet_server(leader_id)
                     .ok_or_else(|| crate::error::Error::InvalidTableError(
                         format!("Tablet server {} not found", leader_id)
