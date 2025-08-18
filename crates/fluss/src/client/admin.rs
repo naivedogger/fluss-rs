@@ -1,8 +1,8 @@
 use std::sync::Arc;
 use crate::client::metadata::Metadata;
-use crate::metadata::{JsonSerde, TableDescriptor, TableInfo, TablePath, DatabaseDescriptor};
+use crate::metadata::{JsonSerde, TableDescriptor, TableInfo, TablePath, DatabaseDescriptor, DatabaseInfo};
 use crate::rpc::{RpcClient, ServerConnection};
-use crate::rpc::message::{GetTableRequest, CreateTableRequest, DropTableRequest, CreateDatabaseRequest, ListTablesRequest};
+use crate::rpc::message::{GetTableRequest, CreateTableRequest, DropTableRequest, CreateDatabaseRequest, ListTablesRequest, TableExistsRequest, DropDatabaseRequest, ListDatabasesRequest, DatabaseExistsRequest, GetDatabaseInfoRequest};
 
 
 use crate::error::Result;
@@ -106,11 +106,72 @@ impl FlussAdmin {
         ))
     }
 
+    /// List all tables in the given database
     pub async fn list_tables(&self, database_name: &str) -> Result<Vec<String>> {
         let response = self
             .admin_gateway
             .request(ListTablesRequest::new(database_name)?)
             .await?;
         Ok(response.table_name)
+    }
+
+    /// Check if a table exists
+    pub async fn table_exists(&self, table_path: &TablePath) -> Result<bool> {
+        let response = self
+            .admin_gateway
+            .request(TableExistsRequest::new(table_path)?)
+            .await?;
+        Ok(response.exists)
+    }
+
+    /// Drop a database
+    pub async fn drop_database(
+        &self,
+        database_name: &str,
+        ignore_if_not_exists: bool,
+        cascade: bool,
+    ) -> Result<()> {
+        let _response = self
+            .admin_gateway
+            .request(DropDatabaseRequest::new(database_name, ignore_if_not_exists, cascade)?)
+            .await?;
+        Ok(())
+    }
+
+    /// List all databases
+    pub async fn list_databases(&self) -> Result<Vec<String>> {
+        let response = self
+            .admin_gateway
+            .request(ListDatabasesRequest::new()?)
+            .await?;
+        Ok(response.database_name)
+    }
+
+    /// Check if a database exists
+    pub async fn database_exists(&self, database_name: &str) -> Result<bool> {
+        let response = self
+            .admin_gateway
+            .request(DatabaseExistsRequest::new(database_name)?)
+            .await?;
+        Ok(response.exists)
+    }
+
+    /// Get database information
+    pub async fn get_database_info(&self, database_name: &str) -> Result<DatabaseInfo> {
+        let request = GetDatabaseInfoRequest::new(database_name)?;
+        let response = self
+            .admin_gateway
+            .request(request)
+            .await?;
+        
+        // Convert proto response to DatabaseInfo
+        let database_descriptor = DatabaseDescriptor::from_json_bytes(&response.database_json)?;
+        
+        Ok(DatabaseInfo::new(
+            database_name.to_string(),
+            database_descriptor,
+            response.created_time,
+            response.modified_time,
+        ))
     }
 }

@@ -5,18 +5,28 @@ use crate::rpc::frame::{ReadError, WriteError};
 
 mod header;
 mod create_database;
+mod drop_database;
+mod list_databases;
+mod database_exists;
+mod get_database_info;
 mod create_table;
 mod drop_table;
 mod list_tables;
+mod table_exists;
 mod fetch;
 mod get_table;
 mod update_metadata;
 mod produce_log;
 
 pub use create_database::*;
+pub use drop_database::*;
+pub use list_databases::*;
+pub use database_exists::*;
+pub use get_database_info::*;
 pub use create_table::*;
 pub use drop_table::*;
 pub use list_tables::*;
+pub use table_exists::*;
 pub use fetch::*;
 pub use get_table::*;
 pub use update_metadata::*;
