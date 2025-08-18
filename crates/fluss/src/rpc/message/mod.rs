@@ -15,6 +15,7 @@ mod list_tables;
 mod table_exists;
 mod fetch;
 mod get_table;
+mod list_offsets;
 mod update_metadata;
 mod produce_log;
 
@@ -29,6 +30,7 @@ pub use list_tables::*;
 pub use table_exists::*;
 pub use fetch::*;
 pub use get_table::*;
+pub use list_offsets::*;
 pub use update_metadata::*;
 pub use produce_log::*;
 pub use header::*;
