@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use crate::client::metadata::Metadata;
-use crate::metadata::{DatabaseDescriptor, DatabaseInfo, JsonSerde, PhysicalTablePath, TableBucket, TableDescriptor, TableInfo, TablePath};
+use crate::metadata::{DatabaseDescriptor, DatabaseInfo, JsonSerde, PhysicalTablePath, TableBucket, TableDescriptor, TableInfo, TablePath, LakeSnapshot};
 use crate::rpc::{RpcClient, ServerConnection};
-use crate::rpc::message::{GetTableRequest, CreateTableRequest, DropTableRequest, CreateDatabaseRequest, ListTablesRequest, TableExistsRequest, DropDatabaseRequest, ListDatabasesRequest, DatabaseExistsRequest, GetDatabaseInfoRequest, OffsetSpec, ListOffsetsRequest, ListOffsetsResult};
+use crate::rpc::message::{GetTableRequest, CreateTableRequest, DropTableRequest, CreateDatabaseRequest, ListTablesRequest, TableExistsRequest, DropDatabaseRequest, ListDatabasesRequest, DatabaseExistsRequest, GetDatabaseInfoRequest, OffsetSpec, ListOffsetsRequest, ListOffsetsResult, GetLatestLakeSnapshotRequest};
 use std::collections::HashMap;
 use tokio::sync::oneshot;
 
@@ -329,5 +329,24 @@ impl FlussAdmin {
         }
         
         Ok(())
+    }
+
+    /// Get the latest lake snapshot for a table
+    pub async fn get_latest_lake_snapshot(&self, table_path: &TablePath) -> Result<LakeSnapshot> {
+        let response = self
+            .admin_gateway
+            .request(GetLatestLakeSnapshotRequest::new(table_path))
+            .await?;
+
+        // Convert proto response to LakeSnapshot
+        let mut table_buckets_offset = HashMap::new();
+        for bucket_snapshot in response.bucket_snapshots {
+            let table_bucket = TableBucket::new(response.table_id, bucket_snapshot.bucket_id);
+            if let Some(log_offset) = bucket_snapshot.log_offset {
+                table_buckets_offset.insert(table_bucket, log_offset);
+            }
+        }
+
+        Ok(LakeSnapshot::new(response.snapshot_id, table_buckets_offset))
     }
 }
