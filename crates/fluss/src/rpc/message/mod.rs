@@ -16,6 +16,7 @@ mod table_exists;
 mod fetch;
 mod get_table;
 mod list_offsets;
+mod get_latest_lake_snapshot;
 mod update_metadata;
 mod produce_log;
 
@@ -31,6 +32,7 @@ pub use table_exists::*;
 pub use fetch::*;
 pub use get_table::*;
 pub use list_offsets::*;
+pub use get_latest_lake_snapshot::*;
 pub use update_metadata::*;
 pub use produce_log::*;
 pub use header::*;
