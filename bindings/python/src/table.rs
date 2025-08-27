@@ -43,7 +43,7 @@ impl FlussTable {
     }
 
     /// Create a new log scanner for the table
-    /// Note: LogScanner is not Send, so this may cause issues in async contexts
+    // Note: LogScanner is not Send, so this may cause issues in async contexts
     fn new_log_scanner<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
         let conn = self.connection.clone();
         let metadata = self.metadata.clone();
@@ -71,7 +71,7 @@ impl FlussTable {
         })
     }
 
-    // current workaround - synchronous version of new_log_scanner
+    /// current workaround - synchronous version of new_log_scanner
     fn new_log_scanner_sync(&self) -> PyResult<LogScanner> {
         let conn = self.connection.clone();
         let metadata = self.metadata.clone();
@@ -255,7 +255,7 @@ impl AppendWriter {
 
     // Convert Python value to Datum
     fn convert_python_value_to_datum(&self, py: Python, value: PyObject) -> PyResult<fcore::row::Datum<'static>> {
-        use fcore::row::{Datum, F32, F64};
+        use fcore::row::{Datum, F32, F64, Blob};
         
         // First try to extract scalar values from Arrow types
         let obj_ref = value.bind(py);
@@ -302,6 +302,11 @@ impl AppendWriter {
             // This is a simplified approach - in production, you might want better lifetime management
             let leaked_str: &'static str = Box::leak(str_val.into_boxed_str());
             return Ok(Datum::String(leaked_str));
+        }
+
+        if let Ok(bytes_val) = value.extract::<Vec<u8>>(py) {
+            let blob = Blob::from(bytes_val);
+            return Ok(Datum::Blob(blob));
         }
         
         // If we can't convert, return an error
@@ -362,7 +367,7 @@ impl LogScanner {
         Ok(())
     }
 
-    // Convert all data to Arrow Table
+    /// Convert all data to Arrow Table
     fn to_arrow(&mut self, py: Python) -> PyResult<PyObject> {
         let mut all_batches = Vec::new();
         let end_timestamp = self.end_timestamp;
@@ -396,10 +401,6 @@ impl LogScanner {
                     };
                     
                     let filtered_records_map = filtered_records.into_records();
-                    let mut filtered_total_records = 0;
-                    for (_bucket, records) in &filtered_records_map {
-                        filtered_total_records += records.len();
-                    }
                     
                     let filtered_records = fcore::record::ScanRecords::new(filtered_records_map);
                     
@@ -426,7 +427,7 @@ impl LogScanner {
         Utils::combine_batches_to_table(py, all_batches)
     }
 
-    // Convert all data to Pandas DataFrame
+    /// Convert all data to Pandas DataFrame
     fn to_pandas(&mut self, py: Python) -> PyResult<PyObject> {
         let arrow_table = self.to_arrow(py)?;
         
@@ -435,23 +436,9 @@ impl LogScanner {
         Ok(df)
     }
 
-    // Return an Arrow RecordBatchReader for streaming data
-    /// TODO: Support this for streaming reads
+    /// Return an Arrow RecordBatchReader for streaming data
+    // TODO: Support this for streaming reads
     fn to_arrow_batch_reader(&mut self, py: Python) -> PyResult<()> {
-        // Create a streaming iterator that wraps our LogScanner
-        
-        // let iterator = LogScannerIterator::new(self, py)?;
-        
-        // // Create Arrow schema for the reader
-        // let schema = Utils::create_arrow_schema(py, &self.table_schema)?;
-        
-        // // Create a Python RecordBatchReader that uses our iterator
-        // let pyarrow = py.import("pyarrow")?;
-        // let reader = pyarrow
-        //     .getattr("RecordBatchReader")?
-        //     .call_method1("from_batches", (schema, iterator))?;
-        
-        // Ok(reader.into())
         Ok(())
     }
 
@@ -505,44 +492,5 @@ impl LogScanner {
         }
         
         (fcore::record::ScanRecords::new(filtered_map), reached_end)
-    }
-}
-
-// Iterator for streaming Arrow RecordBatches from LogScanner
-#[pyclass]
-pub struct LogScannerIterator {
-    scanner_ptr: *mut LogScanner,
-    finished: bool,
-    batch_cache: Vec<PyObject>, // Cache for Arrow batches
-}
-
-#[pymethods]
-impl LogScannerIterator {
-    fn __iter__(slf: PyRef<Self>) -> PyRef<Self> {
-        slf
-    }
-    
-    // TODO: Implement this for streaming reads
-    fn __next__(&mut self, py: Python) -> PyResult<()> {
-        Err(FlussError::new_err("Not implemented"))
-    }
-}
-
-// Make it unsendable to avoid thread safety issues
-unsafe impl Send for LogScannerIterator {}
-unsafe impl Sync for LogScannerIterator {}
-
-impl LogScannerIterator {
-    fn new(scanner: &mut LogScanner, _py: Python) -> PyResult<Self> {
-        Ok(Self {
-            scanner_ptr: scanner as *mut LogScanner,
-            finished: false,
-            batch_cache: Vec::new(),
-        })
-    }
-
-    // TODO: Support this for streaming reads
-    fn convert_to_batches() -> PyResult<()> {
-        Err(FlussError::new_err("Not implemented"))
     }
 }
